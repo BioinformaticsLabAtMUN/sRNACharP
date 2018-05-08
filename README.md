@@ -9,9 +9,9 @@ The pipeline obtains for each sRNA provided:
 * the distance to the closest ORFs listed in the genome annotation.
 
 
-## Requisites
+## 1. Requisites
 
-## Nextflow
+## 1.1 Nextflow
 
 Install [[nextflow]](http://nextflow.io) with the following command:
 ```
@@ -19,18 +19,18 @@ curl -fsSL get.nextflow.io | bash
 ```
 Nextflow can be installed on any POSIX system (UNIX-like system such as Linux, OS X) with Java 7 or 8.
 
-## Other software
+## 1.2 Other software
 
 sRNACharP  requires several pieces of software. There are two ways to install all of the software packages required: natively, or by using [Docker](https://www.docker.com/) (recommended).
 
-## Docker
+## *Docker
 This is certainly the easier (and more reproducible) method. In order to run the pipeline with Docker, you need to install [Docker](https://www.docker.com/) 18.03 (or higher). See the included [Dockerfile](Dockerfile) for the configuration details of the Docker image we have built. Note that this Dockerfile is only included for information only as we have already generated the Docker image. To pull the docker image:
 
 ```
 docker pull penacastillolab/srnacharp@sha256:c2a07f176d7cfe8cea3530bd76da05b30b182cdfe4d4b878f7d90e81f2d6a5f3
 ```
 
-## Natively
+## *Natively
 
 The pipeline can also be used without Docker by installing the following software components on your system:
 
@@ -41,7 +41,7 @@ The pipeline can also be used without Docker by installing the following softwar
 * [Bprom](http://www.softberry.com/berry.phtml?topic=fdp.htm&no_menu=on)
 * [R](https://www.r-project.org/) version 3.4 (or higher)
 
-## Pipeline usage
+## 2. Pipeline usage
 
 Launching the pipeline with the `--help ` parameter shows the help message:
 
@@ -69,7 +69,7 @@ Options:
 
 ```
 
-## Running the pipeline
+## 3. Running the pipeline
 sRNACharP is configured to run using the [Docker](https://www.docker.com/) container engine by default (see [Nextflow config file](nextflow.config)). If you have installed the required software natively, you also need to modify the [Nextflow config file](nextflow.config).
 
 A [sample data set](test_data) is provided. To run sRNACharP with the test data, replace ADD_PATH below with the correct path in your system and run the following command on your terminal:
@@ -108,7 +108,7 @@ Launching `sRNACharP.nf` [crazy_heyrovsky] - revision: a560734176
     exit status : 0
 ```
 
-## Pipeline results
+## 4. Pipeline results
 
 Analyses results are saved into the working directory.
 
@@ -145,7 +145,7 @@ NC_016810.1     TransTermHP     TERM4   14760   14779   100     +       .
 
 * Two more files are generated in the working directory: `ORGANISMRNAsSS.txt` and `ORGANISMGenomelength.txt` containing the free energy of the predicted secondary structure and the number of nucleotides in the genome, respectively. 
 
-## Citing
+## 5. Citing
 If you use the pipeline, please cite:
 
 EJJ Eppenhof and L. Peña-Castillo, Prioritizing Bacterial small RNAs using Machine Learning. Under review. 2018.
