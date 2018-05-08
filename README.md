@@ -8,7 +8,10 @@ The pipeline obtains for each sRNA provided:
 * the distance to the closest terminator predicted by transterm,
 * the distance to the closest ORFs listed in the genome annotation.
 
-## Quickstart
+
+## Requisites
+
+## Nextflow
 
 Install [[nextflow]](http://nextflow.io) with the following command:
 ```
@@ -16,17 +19,17 @@ curl -fsSL get.nextflow.io | bash
 ```
 Nextflow can be installed on any POSIX system (UNIX-like system such as Linux, OS X) with Java 7 or 8.
 
+## Other software
 
-## Requisites
-The pipeline  requires several pieces of software. There are two ways to install all of the software packages required for this pipeline - natively, or by using [Docker](https://www.docker.com/) (recommended).
+sRNACharP  requires several pieces of software. There are two ways to install all of the software packages required: natively, or by using [Docker](https://www.docker.com/) (recommended).
 
 ## Docker
-This is certainly the easier (and more reproducible) method. In order to run the pipeline with Docker, you need to install [Docker](https://www.docker.com/) 18.03 (or higher). See the included [Dockerfile](Dockerfile) for the configuration details of the Docker image we have built.  sRNACharP is configured to run using the [Docker](https://www.docker.com/) container engine by default (see [Nextflow config file](nextflow.config)). 
-To pull the docker image:
+This is certainly the easier (and more reproducible) method. In order to run the pipeline with Docker, you need to install [Docker](https://www.docker.com/) 18.03 (or higher). See the included [Dockerfile](Dockerfile) for the configuration details of the Docker image we have built. Note that this Dockerfile is only included for information only as we have already generated the Docker image. To pull the docker image:
 
 ```
 docker pull penacastillolab/srnacharp@sha256:c2a07f176d7cfe8cea3530bd76da05b30b182cdfe4d4b878f7d90e81f2d6a5f3
 ```
+
 ## Natively
 
 The pipeline can also be used without Docker by installing the following software components on your system:
@@ -37,8 +40,6 @@ The pipeline can also be used without Docker by installing the following softwar
 * [TransTermHP](http://transterm.cbcb.umd.edu/index.php) version 2.09
 * [Bprom](http://www.softberry.com/berry.phtml?topic=fdp.htm&no_menu=on)
 * [R](https://www.r-project.org/) version 3.4 (or higher)
-
-You also need to modify the [Nextflow config file](nextflow.config).
 
 ## Pipeline usage
 
@@ -69,7 +70,9 @@ Options:
 ```
 
 ## Running the pipeline
-A [sample data set](test_data) is provided. To run sRNACharP with the test data, replace ADD_PATH below with the correct path in your system and run the command on your terminal:
+sRNACharP is configured to run using the [Docker](https://www.docker.com/) container engine by default (see [Nextflow config file](nextflow.config)). If you have installed the required software natively, you also need to modify the [Nextflow config file](nextflow.config).
+
+A [sample data set](test_data) is provided. To run sRNACharP with the test data, replace ADD_PATH below with the correct path in your system and run the following command on your terminal:
 
 ```
 nextflow run sRNACharP.nf  --org="R_capsulatus" --dir="/ADD_PATH/sRNACharP/test_data" --genome="R_capsulatus_genome.fasta"  --sRNAs="R_capsulatus_sRNAs.bed" --genomeAnnotation="R_capsulatus_genomeAnnotation_proteincoding.bed"
