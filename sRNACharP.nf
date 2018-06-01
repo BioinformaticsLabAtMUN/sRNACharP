@@ -77,9 +77,7 @@ if( !annotationFile.exists() ) {
 }
 
 exptermFile = file("${TERM_DATA}")
-//if( !exptermFile.exists() ) {
-//  exit 1, "The specified Transterm expterm.dat file does not exist."
-//}
+
 
 /*
 * Set global variables
@@ -445,6 +443,7 @@ workflow.onComplete {
    """
     Pipeline execution summary
     ---------------------------
+    Run as      : ${workflow.commandLine}
     Completed at: ${workflow.complete}
     Duration    : ${workflow.duration}
     Success     : ${workflow.success}
