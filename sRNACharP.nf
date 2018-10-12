@@ -242,7 +242,8 @@ process createCRDFile{
    
    script:	
    """
-   awk -F '\\t' '\$6 == "+" {print \$4,\$2,\$3,\$1} \$6 == "-" {print \$4,\$3,\$2,\$1}' $annotationFile > transtermAnnotation.crd
+   #transterm start coordinates are 1-based
+   awk -F '\\t' '\$6 == "+" {print \$4,\$2+1,\$3,\$1} \$6 == "-" {print \$4,\$3,\$2+1,\$1}' $annotationFile > transtermAnnotation.crd
    """
 }
 
