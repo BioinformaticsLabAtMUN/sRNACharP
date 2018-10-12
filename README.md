@@ -79,7 +79,7 @@ NC_008060.1	1407	2622	Bcen_0002	·	-	gene
 NC_008060.1	2665	2992	Bcen_0003	·	-	gene
 ```
 
-The sRNAs BED file requires six columns: Sequence, Start, End, Name, Score, Strand. A seventh column with the Type may also be provided. For instance,
+The sRNAs BED file requires six columns: Sequence, Start, End, Name, Score, Strand. A seventh column with the Type may also be provided. The name in the fourth column must uniquely identify each sRNA. For instance,
 ```
 NC_008060.1	208288	208699	s208288	412	+
 NC_008060.1	604653	605021	s604653	369	-
