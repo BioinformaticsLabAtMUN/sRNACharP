@@ -24,7 +24,7 @@ Nextflow can be installed on any POSIX system (UNIX-like system such as Linux, O
 sRNACharP  requires several pieces of software. There are two ways to install all of the software packages required: natively, or by using [Docker](https://www.docker.com/) (recommended).
 
 ## *Docker
-This is certainly the easier (and more reproducible) method. In order to run the pipeline with Docker, you need to install [Docker](https://www.docker.com/) 18.03 (or higher). See the included [Dockerfile](Dockerfile) for the configuration details of the Docker image we have built. Note that this Dockerfile is only included for information only as we have already generated the Docker image. To pull the docker image:
+This is certainly the easier (and more reproducible) method. In order to run the pipeline with Docker, you need to install [Docker](https://www.docker.com/) 18.03 (or higher). See the included [Dockerfile](Dockerfile) for the configuration details of the Docker image we have built. Note that this Dockerfile is included for information only as we have already generated the Docker image. To pull the docker image:
 
 ```
 docker pull penacastillolab/srnacharp@sha256:c2a07f176d7cfe8cea3530bd76da05b30b182cdfe4d4b878f7d90e81f2d6a5f3
@@ -68,6 +68,26 @@ Options:
 --transtermFile TRANSTERM_FILE   the TransTerm predictions file [optional].
 
 ```
+
+The organism name is any alphanumeric string without whitespaces.
+
+The annotation file is a BED file with seven columns: Sequence, Start, End, Name, Score, Strand, and Type. For instance,
+
+```
+NC_008060.1	277	1393	Bcen_0001	·	-	gene
+NC_008060.1	1407	2622	Bcen_0002	·	-	gene
+NC_008060.1	2665	2992	Bcen_0003	·	-	gene
+```
+
+The sRNAs BED file requires six columns: Sequence, Start, End, Name, Score, Strand. A seventh column with the Type may also be provided. For instance,
+```
+NC_008060.1	208288	208699	s208288	412	+
+NC_008060.1	604653	605021	s604653	369	-
+NC_008060.1	2044980	2045161	s2044980	182	+
+NC_008062.1	409323	409390	s409323	68	+
+```
+
+NOTE: Make sure that the sequence identifier is the same in both BED files and in the genome FASTA file. The sequence identifier should not contain whitespace.
 
 ## 3. Running the pipeline
 sRNACharP is configured to run using the [Docker](https://www.docker.com/) container engine by default (see [Nextflow config file](nextflow.config)). If you have installed the required software natively, you also need to modify the [Nextflow config file](nextflow.config).
