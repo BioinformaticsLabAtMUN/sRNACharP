@@ -78,7 +78,6 @@ if( !annotationFile.exists() ) {
 
 exptermFile = file("${TERM_DATA}")
 
-
 /*
 * Set global variables
 */
@@ -365,8 +364,17 @@ selectClosestORF <- function(m, up = TRUE){
 
 #sRNAs
 sRNAs <- read.table( "$sRNAs", header = FALSE, sep = "\\t", stringsAsFactors = FALSE)
-colnames(sRNAs) <- c("Replicon","Start", "End", "ID", "Score", "Strand", "Type")
+#the first 6 columns are required
+nCols <- ncol(sRNAs)
+if (nCols < 6 || nCols > 7){
+stop("sRNAs BED file must contain 6 or 7 columns: Replicon,Start, End, ID, Score, Strand, Type. The last column Type is optional.")
+}
+
+#Take only the first columns
+sRNAs<- sRNAs[,1:6]
+colnames(sRNAs) <- c("Replicon","Start", "End", "ID", "Score", "Strand")
 row.names(sRNAs ) <- sRNAs[,"ID"]
+
 
 #SS
 sRNA_E <- read.table( "$energySS", header = FALSE, sep = "\\t", stringsAsFactors = FALSE)
@@ -386,11 +394,15 @@ sRNA_bprom[["Pos35wrtsRNAStart"]] <- sRNA_bprom[["Pos35"]] - 150
 upstreamRaw <- read.table("$uORFs", sep = "\\t", header = FALSE, stringsAsFactors = FALSE)
 downstreamRaw <- read.table("$dORFs", sep = "\\t", header = FALSE, stringsAsFactors = FALSE)
 
-#A BED file has to be used to provide the genome annotation. Otherwise the number of columns is not 15!
-if (ncol(upstreamRaw) == 15){ #obtained when using a bed file with the genome annotation
-	colnames(downstreamRaw) <- colnames(upstreamRaw) <- c("Replicon","Start", "End", "ID", "Score", "Strand", "Type", "RepliconORF",  "ORFStart", "ORFEnd", "ORFDescription", "ORFScore", "ORFStrand", "ORFType", "Distance")
+#A BED file has to be used to provide the genome annotation. Otherwise the number of column number is not correct!
+if (nCols == 7 && ncol(upstreamRaw) == 15){ #obtained when using a bed file with the genome annotation
+downstreamRaw <- downstreamRaw[,-7]
+upstreamRaw <- upstreamRaw[,-7]
+colnames(downstreamRaw) <- colnames(upstreamRaw) <- c("Replicon","Start", "End", "ID", "Score", "Strand", "RepliconORF",  "ORFStart", "ORFEnd", "ORFDescription", "ORFScore", "ORFStrand", "ORFType", "Distance")
+} else if ( nCols == 6 && ncol(upstreamRaw) == 14 ) {
+colnames(downstreamRaw) <- colnames(upstreamRaw) <- c("Replicon","Start", "End", "ID", "Score", "Strand", "RepliconORF",  "ORFStart", "ORFEnd", "ORFDescription", "ORFScore", "ORFStrand", "ORFType", "Distance")
 } else{ # unexpected number of columns
-	stop("Unexpected number of columns in neighbors files")	
+stop("Unexpected number of columns in neighbor ORF files")
 }
 
 upstreamC <- by(upstreamRaw, upstreamRaw[,"ID"], selectClosestORF, TRUE, simplify = FALSE)
@@ -403,7 +415,16 @@ row.names(downstreamC) <- downstreamC[,"ID"]
 
 #Terminator
 sRNA_closestTerm <- read.table("$terminators", sep = "\\t", header = FALSE, stringsAsFactors = FALSE)
-colnames(sRNA_closestTerm) <-  c("Replicon","Start", "End", "ID", "Score", "Strand", "Type", "RepliconTerm", "TermSource","TermID", "ORFStart", "ORFEnd", "TermScore", "TermStrand", "TermExtra", "Distance")
+
+if (nCols == 7 ){
+sRNA_closestTerm <- sRNA_closestTerm[,-7]
+}
+
+if (ncol(sRNA_closestTerm) != 15) {
+stop("Unexpected number of columns in closest Term file")
+}
+
+colnames(sRNA_closestTerm) <-  c("Replicon","Start", "End", "ID", "Score", "Strand","RepliconTerm", "TermSource","TermID", "ORFStart", "ORFEnd", "TermScore", "TermStrand", "TermExtra", "Distance")
 
 sRNA_closestTerm <- by(sRNA_closestTerm, sRNA_closestTerm[,"ID"], selectClosestORF, FALSE, simplify = FALSE)
 sRNA_closestTerm <- do.call("rbind", sRNA_closestTerm)
