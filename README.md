@@ -168,5 +168,5 @@ NC_016810.1     TransTermHP     TERM4   14760   14779   100     +       .
 ## 5. Citing
 If you use the pipeline, please cite:
 
-Eppenhof EJ, Peña-Castillo L. (2018) [Prioritizing bona fide bacterial small RNAs with machine learning classifiers. PeerJ Preprints 6:e26974v1](https://doi.org/10.7287/peerj.preprints.26974v1)
+Eppenhof EJ, Peña-Castillo L. (2019) [Prioritizing bona fide bacterial small RNAs with machine learning classifiers. PeerJ 7:e6304](https://doi.org/10.7717/peerj.6304)
 
