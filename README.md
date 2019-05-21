@@ -43,7 +43,7 @@ The pipeline can also be used without Docker by installing the following softwar
 
 ## 2. Pipeline usage
 
-Launching the pipeline with the `--help ` parameter shows the help message:
+After downloading the file [sRNACharP.nf](sRNACharP.nf), one can launch the pipeline with the `--help ` parameter (make sure you run this command on the directory where sRNACharP.nf is located). This should show the help message:
 
 ```
 nextflow run sRNACharP.nf  --help
