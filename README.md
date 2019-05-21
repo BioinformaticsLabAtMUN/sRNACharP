@@ -90,9 +90,9 @@ NC_008062.1	409323	409390	s409323	68	+
 NOTE: Make sure that the sequence identifier is the same in both BED files and in the genome FASTA file. The sequence identifier should not contain whitespace.
 
 ## 3. Running the pipeline
-sRNACharP is configured to run using the [Docker](https://www.docker.com/) container engine by default (see [Nextflow config file](nextflow.config)). If you have installed the required software natively, you also need to modify the [Nextflow config file](nextflow.config).
+sRNACharP is configured to run using the [Docker](https://www.docker.com/) container engine by default (see [Nextflow config file](nextflow.config)). If you are using Docker, download the [Nextflow config file](nextflow.config) and save it on the same directory as the sRNACharP.nf file. If you have installed the required software natively, you will need to modify the [Nextflow config file](nextflow.config).
 
-A [sample data set](test_data) is provided. To run sRNACharP with the test data, replace ADD_PATH below with the correct path in your system and run the following command on your terminal:
+A [sample data set](test_data) is provided. To run sRNACharP with the test data, replace ADD_PATH below with the correct path in your system and run the following command on your terminal (make sure you are executing nextflow on the directory where the sRNACharP.nf file and the Nextflow config file are located):
 
 ```
 nextflow run sRNACharP.nf  --org="R_capsulatus" --dir="/ADD_PATH/sRNACharP/test_data" --genome="R_capsulatus_genome.fasta"  --sRNAs="R_capsulatus_sRNAs.bed" --genomeAnnotation="R_capsulatus_genomeAnnotation_proteincoding.bed"
