@@ -134,9 +134,7 @@ Analyses results are saved into the working directory.
 
 Output files are the following (replace ORGANISM with the value of the --org parameter):
 
-* `ORGANISM_FeatureTable.tsv` - table containing the characteristics per sRNA. Columns are: sequence identifier (sRNA ID), free energy of predicted secondary structure, distance to the -10 position of the closest predicted promoter, distance to the closest predicter terminator, distance to the
-closest upstream ORF, a flag indicating whether the sRNA is on the same strand as the closest upstream ORF, distance to the closest downstream ORF, and a flag indicating whether the sRNA is on the same strand as the closest downstream ORF.
-Here are some lines of a feature table generated:
+* `ORGANISM_FeatureTable.tsv` - table containing the characteristics per sRNA. Columns are: sequence identifier (sRNA ID), free energy of predicted secondary structure, distance to the -10 position of the closest predicted promoter, distance to the closest predicted terminator, distance to the closest upstream ORF, a flag indicating whether the sRNA is on the same strand as the closest upstream ORF, distance to the closest downstream ORF, and a flag indicating whether the sRNA is on the same strand as the closest downstream ORF. Here are some lines of a feature table generated:
 
 ```
 STnc1010      -23.3   -3      0       -5      1       16      1
