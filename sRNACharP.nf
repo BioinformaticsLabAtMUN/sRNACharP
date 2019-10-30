@@ -337,9 +337,15 @@ process createAttributeTable{
 #!/usr/bin/env Rscript
     
 selectClosestORF <- function(m, up = TRUE){
-	# if there is only one close ORF, return it
+	# There is only one close ORF
 	if (nrow(m) < 2) {
-		return(m) 
+        	if (m[,"Distance"] == -1 && m[,7] == ".") { ## there is no close Feature Replicon == . and BedTools has returned -1 as distance, then make distance 1000
+            		tmp <-m
+            		tmp[,"Distance"] <- 1000
+            		return(tmp)
+        	} else {
+            		return(m)
+        	}
 	}
 	#order by distance
 	o <- order(abs(m[,"Distance"]), decreasing = FALSE) 
@@ -430,12 +436,8 @@ colnames(sRNA_closestTerm) <-  c("Replicon","Start", "End", "ID", "Score", "Stra
 sRNA_closestTerm <- by(sRNA_closestTerm, sRNA_closestTerm[,"ID"], selectClosestORF, FALSE, simplify = FALSE)
 sRNA_closestTerm <- do.call("rbind", sRNA_closestTerm)
 
-
 #Cap distance to terminator to 1000. Erik experiments show that having very large distances to terminator decrease the performance of the classifiers
 sRNA_closestTerm[["Distance"]] <- ifelse(sRNA_closestTerm[["Distance"]]>1000, 1000, sRNA_closestTerm[["Distance"]])
-#Make negative distance to terminator 1000. BEDTools returns -1 if not terminator is found
-sRNA_closestTerm[["Distance"]] <- ifelse(sRNA_closestTerm[["Distance"]] < 0, 1000, sRNA_closestTerm[["Distance"]])
-
 
 #Create dataset
 Data <- cbind(sRNAs[,"Strand"], sRNA_E[row.names(sRNAs), "Energy"], sRNA_bprom[row.names(sRNAs), "Pos10wrtsRNAStart"], sRNA_closestTerm[row.names(sRNAs),"Distance"], 
