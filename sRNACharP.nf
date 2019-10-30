@@ -433,6 +433,8 @@ sRNA_closestTerm <- do.call("rbind", sRNA_closestTerm)
 
 #Cap distance to terminator to 1000. Erik experiments show that having very large distances to terminator decrease the performance of the classifiers
 sRNA_closestTerm[["Distance"]] <- ifelse(sRNA_closestTerm[["Distance"]]>1000, 1000, sRNA_closestTerm[["Distance"]])
+#Make negative distance to terminator 1000. BEDTools returns -1 if not terminator is found
+sRNA_closestTerm[["Distance"]] <- ifelse(sRNA_closestTerm[["Distance"]] < 0, 1000, sRNA_closestTerm[["Distance"]])
 
 
 #Create dataset
