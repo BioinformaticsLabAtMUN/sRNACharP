@@ -11,6 +11,7 @@
 * 1) a FASTA file with the genome (genome),
 * 2) a BED file with the sRNAs genomic coordinates (sRNAs), and 
 * 3) a BED file with the genome annotation (only protein coding genes) (genomeAnnotation).
+* 4) a CSV file with predicted promoters
 * To get a BED file from a GFF file one can use:
 * awk 'OFS="\t" {if ($3=="gene") {print $1,$4-1,$5,$10,$16,$7}}' | tr -d '";'
 *
@@ -55,6 +56,7 @@ if (params.help) {
   log.info '--annot         ANNOTATION_FILE  the annotation file in BED format (including only protein coding genes)[required]'
   log.info '--sRNAs         SEQUENCE_FILE    the sRNAs file in BED format [required]'
   log.info '--transtermFile TRANSTERM_FILE   the TransTerm predictions file [optional].'
+  log.info '--promoterFile  PREDICTED_PROMOTER_FILE the Promoter predictions file [required]' 
   exit 1
 }
 
@@ -78,6 +80,10 @@ if( !annotationFile.exists() ) {
 
 exptermFile = file("${TERM_DATA}")
 
+promoterFile = file("${params.dir}/${params.promoterFile}")
+if( !promoterFile.exists() ) {
+  exit 1, "The specified input promoter prediction file does not exist: ${params.promoterFile}"
+}
 /*
 * Set global variables
 */
@@ -125,6 +131,26 @@ process getFASTAsRNAs{
    """
 }
 
+/*
+*Reorder and sort Promoter Prediction File
+*/
+process reorderAndSortPromoterPredictions{
+   input:
+	file promoterFile
+   output:
+	file "${params.org}_sortedPromoterPredictions.bed" into sortedPromoterPredictions 
+   script:
+	"""
+	awk -v OFS="\t" 'NR>1{print \$1,\$2,\$3,\$6,\$4,\$5}' ${promoterFile} > ${params.org}_promoterPredictions.bed
+	sortBed -i ${params.org}_promoterPredictions.bed > ${params.org}_sortedPromoterPredictions.bed
+
+	"""
+}
+
+sortedPromoterPredictions
+  .collectFile(name: file("${params.org}_sortedPromoterPredictions.bed"))
+
+
 /*************************************************************************************
 * GET FREE ENERGY OF PREDICTED SECONDARY STRUCTURE
 *************************************************************************************/
@@ -152,73 +178,6 @@ process getFreeEnergySS{
 freeEnergy4sRNA
   .collectFile(name: file("${params.org}sRNAsSS.txt"))
   .set{sRNAsEnergy}
-  
-
-/*************************************************************************************
-* GET GENOMIC COORDINATES OF PREDICTED PROMOTERS
-*************************************************************************************/
-/*
-* Get the 150 nt upstream sequences of the sRNAs into a FASTA file
-*/
-process getUpstreamSequences{
-   input:
-      file "${params.org}GenomeLength.txt" from lengthGenome
-      file bedFile
-      file genomeFile
-    
-   output:
-      file "${params.org}_sRNAs_150ntUp.fasta" into sRNAsUpstreamFASTA
-      val id into genomeID 
-      
-   script:
-	 /*Get the genome ID*/
-	lengthFile = file("${params.org}GenomeLength.txt")
-	(id) = (lengthFile.text=~ /^(\S+)/)[0]
-   """
-    slopBed -i $bedFile -g ${params.org}GenomeLength.txt -l 150 -r 0 -s > ${params.org}_sRNAs_150ntUp.gtf
-    fastaFromBed -fi $genomeFile -bed ${params.org}_sRNAs_150ntUp.gtf -fo ${params.org}_sRNAs_150ntUp.fasta -s -$name
-   """
-}
-
-
-/*
-* Split the upstream sequences FASTA file into single-sequence FASTA files 
-* then execute a bprom job for each sequence
-*/
-sRNAsUpstreamFASTA
-  .splitFasta(by:1, file:true)
-  .set{singleSequences}
-
-
-/* 
-* Execute a bprom job to predict promoter sites in each of the upstream sequences
-* and obtain a tabular representation of the promoter site associated
-* to each sRNA
-* Directory to access Bprom data has to be set in the nextflow.config file
-*/
-process getPromoterSites{
-   input:
-      file "seq.fa" from singleSequences //automatically does it for all the files
-      
-   output:
-      file "bpromRes.tab" into predictedPromoters
-      
-   script:
-   '''
-    #create a multiline fasta file with maximum 70 characteres per line
-    awk 'BEGIN{RS=">";FS="\\n"}NR>1{seq="";for (i=2;i<=NF;i++) seq=seq""$i;a[$1]=seq;b[$1]=length(seq)}END{for (i in a) {k=sprintf("%d", (b[i]/70)+1); printf ">%s\\n",i;for (j=1;j<=int(k);j++) printf "%s\\n", substr(a[i],1+(j-1)*70,70)}}' seq.fa> seq2.fa
-    bprom seq2.fa bpromRes.txt
-	 grep -E '>|LDF|-10|-35' bpromRes.txt \
-    | awk -F "\\n" '!/^>/ {printf "\\t%s", $0; n= "\\n"} /^>/ {printf "\\n%s", $0; n = ""} END {printf "\\t%s", n}' \
-    | grep Promoter | perl -p -e 's/ +/\\t/g' | perl -p -e 's/\\t+/\\t/g' | cut -f1,4,6,11,12,14,19,20,22 \
-    | perl -p -e 's/^>//'  > bpromRes.tab
-   '''
-}
-
-predictedPromoters
-  .collectFile(name: file("${params.org}sRNAsBpromRes.txt"))
-  .set{sRNAsPromoters}
-
 
 /*************************************************************************************
 * GET GENOMIC COORDINATES OF PREDICTED RHO-INDEPENDENT TERMINATORS
@@ -270,16 +229,17 @@ process runTransterm{
 process parseTranstermResults{
   input:
      file "transtermRes.txt" from predictedTerminators
-     val ID from genomeID
      
   output:
      file "transtermRes.gtf" into transtermGTF
 
    script:
+    lengthFile = file("${params.org}GenomeLength.txt")
+	(id) = (lengthFile.text=~ /^(\S+)/)[0]
    """  
      grep TERM transtermRes.txt | perl -p -e 's/ +/\\t/g' | perl -p -e 's/\\|.*\$//' | perl -p -e 's/TERM\\t/TERM/' \
      | cut -f2,3,5- \
-     | awk -F "\\t" '\$3 > \$2 {print "${ID}", "TransTermHP", \$1, \$2, \$3, \$6, \$4, "."} \$2 > \$3 {print "${ID}", "TransTermHP", \$1, \$3, \$2, \$6, \$4, "." }'  \
+     | awk -F "\\t" '\$3 > \$2 {print "${id}", "TransTermHP", \$1, \$2, \$3, \$6, \$4, "."} \$2 > \$3 {print "${id}", "TransTermHP", \$1, \$3, \$2, \$6, \$4, "." }'  \
      | perl -p -e 's/ +/\\t/g' |  sortBed > transtermRes.gtf
    """
 }
@@ -291,46 +251,53 @@ transtermGTF
 
 
 /*************************************************************************************
-* GET DISTANCE TO ORFs AND TERMINATORS
+* GET DISTANCE TO ORFs, TERMINATORS AND PREDICTED PROMOTERS
 *************************************************************************************/
 process getDistances{
   input:
      file bedFile
      file annotationFile
      file predTerms from sRNAsTerminators
+     file sortedPromoterFile from sortedPromoterPredictions
 
   output:
-     file "sRNAsSorted.bed" into sortedBed
+          file "sRNAsSorted.bed" into sortedBed
   	  file "ClosestDownstreamTranscript.txt" into downORFs
   	  file "ClosestUpstreamTranscript.txt" into upORFs
   	  file "ClosestDownstreamTerm.txt" into downTerminator
-  
-  script:
-    """
+          file "ClosestPromoterDistance.txt" into closestPromoterDistances 
+  script: 
+   """
       sortBed -i $bedFile > sRNAsSorted.bed
       bedtools closest -a sRNAsSorted.bed -b ${annotationFile} -D "ref" -iu -k 2 > ClosestDownstreamTranscript.txt
       bedtools closest -a sRNAsSorted.bed -b ${annotationFile} -D "ref" -id -k 2 > ClosestUpstreamTranscript.txt
       bedtools closest -a sRNAsSorted.bed -b ${predTerms}  -D "a" -iu  > ClosestDownstreamTerm.txt
+      cut -f 1-6 sRNAsSorted.bed > firstSixColumnsFromsRNA.bed
+      bedtools closest -D a -s -id -a firstSixColumnsFromsRNA.bed -b ${sortedPromoterFile} > ClosestPromoterDistance.txt
     """
 }
+
+closestPromoterDistances
+  .collectFile(name: file("${params.org}_closestPromoterDistances.txt"))
+  .set{promoterDistances}
 
 
 /*************************************************************************************
 * CREATE FINAL DATASET WITH R SCRIPT
-* Reguires output from getDistances, sRNAsPromoters, sRNAsEnergy
+* Reguires output from getDistances,sRNAsEnergy
 *************************************************************************************/
 
 process createAttributeTable{
   input:
-     file promoters from sRNAsPromoters
-     file energySS from sRNAsEnergy
-     file sRNAs from sortedBed
-  	  file dORFs from downORFs
-  	  file uORFs from upORFs
-  	  file terminators from downTerminator
+         file energySS from sRNAsEnergy
+         file sRNAs from sortedBed
+  	 file dORFs from downORFs
+  	 file uORFs from upORFs
+  	 file terminators from downTerminator
+         file promoters from promoterDistances
 
   output:
-  	  file "${params.org}_FeatureTable.tsv" into attributesTable 
+  	 file "${params.org}_FeatureTable.tsv" into attributesTable 
 
   script:
     """
@@ -388,14 +355,13 @@ sRNA_E <- read.table( "$energySS", header = FALSE, sep = "\\t", stringsAsFactors
 colnames(sRNA_E) <- c("ID", "Energy")
 row.names(sRNA_E ) <- gsub("::.*\$", "", sRNA_E[,"ID"], perl = TRUE)
 
-#Promoter sites
-sRNA_bprom <- read.table("$promoters", sep = "\\t", header = FALSE, stringsAsFactors = FALSE)
-colnames(sRNA_bprom) <- c("ID", "TSSPos", "LDF", "Pos10", "Seq10", "Score10","Pos35","Seq35","Score35")
-row.names(sRNA_bprom) <- gsub("::.*\$", "", sRNA_bprom[,"ID"], perl = TRUE)
-
-#Get distance to promoters
-sRNA_bprom[["Pos10wrtsRNAStart"]] <- sRNA_bprom[["Pos10"]] - 150
-sRNA_bprom[["Pos35wrtsRNAStart"]] <- sRNA_bprom[["Pos35"]] - 150
+#Distance to Promoters
+promotersRaw <- read.table("$promoters", sep = "\\t", header = FALSE, stringsAsFactors = FALSE)
+colnames(promotersRaw) <- c("Sequence","Start", "End", "ID", "Score", "Strand", "PromoterSequence",  "ORFStart", "ORFEnd", "PromoterID", "PromoterScore", "PromoterStrand", "Distance")
+closestPromoterDistance <- by(promotersRaw, promotersRaw[,"ID"], selectClosestORF, TRUE, simplify = FALSE)
+closestPromoterDistance <- do.call("rbind", closestPromoterDistance)
+row.names(closestPromoterDistance) <- closestPromoterDistance[,"ID"]
+closestPromoterDistance[["Distance"]] <- ifelse((abs(closestPromoterDistance[["Distance"]])>=1000 | closestPromoterDistance[["Distance"]] == -1),-1000, closestPromoterDistance[["Distance"]])
 
 #Distance to ORFs
 upstreamRaw <- read.table("$uORFs", sep = "\\t", header = FALSE, stringsAsFactors = FALSE)
@@ -440,17 +406,16 @@ sRNA_closestTerm <- do.call("rbind", sRNA_closestTerm)
 sRNA_closestTerm[["Distance"]] <- ifelse(sRNA_closestTerm[["Distance"]]>1000, 1000, sRNA_closestTerm[["Distance"]])
 
 #Create dataset
-Data <- cbind(sRNAs[,"Strand"], sRNA_E[row.names(sRNAs), "Energy"], sRNA_bprom[row.names(sRNAs), "Pos10wrtsRNAStart"], sRNA_closestTerm[row.names(sRNAs),"Distance"], 
+Data <- cbind(sRNAs[,"Strand"], sRNA_E[row.names(sRNAs), "Energy"], closestPromoterDistance[row.names(sRNAs),"Distance"],sRNA_closestTerm[row.names(sRNAs),"Distance"], 
 upstreamC[row.names(sRNAs), c("Distance", "ORFStrand")], downstreamC[row.names(sRNAs), c("Distance", "ORFStrand")])
 
-colnames(Data) <- c("Strand", "SS", "Pos10wrtsRNAStart","DistTerm", "Distance", "ORFStrand","DownDistance",  "DownORFStrand")
+colnames(Data) <- c("Strand", "SS", "PromoterDistance","DistTerm", "Distance", "ORFStrand","DownDistance",  "DownORFStrand")
 
 Data[["sameStrand"]] <- ifelse(Data[["Strand"]] == Data[["ORFStrand"]], 1, 0)
 Data[["sameDownStrand"]] <- ifelse(Data[["Strand"]] == Data[["DownORFStrand"]], 1, 0)
-Data[["Pos10wrtsRNAStart"]] <- ifelse(is.na(Data[["Pos10wrtsRNAStart"]]), -1000, Data[["Pos10wrtsRNAStart"]])
 Data[["DistTerm"]] <- ifelse(is.na(Data[["DistTerm"]]), 1000, Data[["DistTerm"]])
 
-DataF <- Data[,c("SS", "Pos10wrtsRNAStart","DistTerm", "Distance", "sameStrand", "DownDistance", "sameDownStrand")]
+DataF <- Data[,c("SS", "PromoterDistance","DistTerm", "Distance", "sameStrand", "DownDistance", "sameDownStrand")]
 write.table(DataF, file = "${params.org}_FeatureTable.tsv", sep = "\\t", row.names = TRUE, col.names = TRUE)
 
     """
