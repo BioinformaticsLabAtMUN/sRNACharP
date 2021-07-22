@@ -124,12 +124,18 @@ process getFASTAsRNAs{
 
    output:
       file "${params.org}_sRNAs.fasta" into sRNAsFASTA
+      file "sequences.txt" into sequences
 
    script:
    """
    fastaFromBed -fi $genomeFile -bed $bedFile -fo ${params.org}_sRNAs.fasta -s -$name
+   fastaFromBed -fi $genomeFile -bed $bedFile -fo sequences.txt -s -$name -tab
    """
 }
+
+// sequences
+//   .collectFile(name: file("${params.org}_sequences.txt"))
+
 
 /*
 *Reorder and sort Promoter Prediction File
@@ -297,7 +303,7 @@ process createAttributeTable{
          file promoters from promoterDistances
 
   output:
-  	 file "${params.org}_FeatureTable.tsv" into attributesTable 
+  	 file "FeatureTable.tsv" into attributesTable 
 
   script:
     """
@@ -416,15 +422,90 @@ Data[["sameDownStrand"]] <- ifelse(Data[["Strand"]] == Data[["DownORFStrand"]], 
 Data[["DistTerm"]] <- ifelse(is.na(Data[["DistTerm"]]), 1000, Data[["DistTerm"]])
 
 DataF <- Data[,c("SS", "PromoterDistance","DistTerm", "Distance", "sameStrand", "DownDistance", "sameDownStrand")]
-write.table(DataF, file = "${params.org}_FeatureTable.tsv", sep = "\\t", row.names = TRUE, col.names = TRUE)
+write.table(DataF, file = "FeatureTable.tsv", sep = "\\t", row.names = TRUE, col.names = TRUE)
 
     """
 }
 
 
-attributesTable
-  .collectFile(name: file("${params.org}_FeatureTable.tsv"))
+process createTetranucleotideRC_features{
+  input:
+    file  "sequences.txt" from sequences
+    file "FeatureTable.tsv" from attributesTable 
 
+  output:
+  file 'featureTableNew.tsv' into featureTableNew
+    
+  '''
+  #!/usr/bin/env python3
+  import os
+  import itertools
+  import pandas as pd
+  from skbio import Sequence
+  from skbio import DNA
+
+  featureTable = pd.read_csv('Featuretable.tsv', "\t")
+  Sequences = pd.read_csv('sequences.txt', header=None, sep="\t")
+  Sequences.iloc[:,0] = Sequences.iloc[:,0].str.split("(",expand=True).iloc[:,0]
+
+  # Number of sequences
+  rowsCount = Sequences.shape[0]
+
+  # Number of Nucleotide
+  NucleotideNum = 4
+
+  # Appending NucleotidesColumn(new features) and initialize with zeros
+  iter = itertools.product('ACGT', repeat=NucleotideNum)
+  iterJoin = []
+
+  for i in iter:
+    colLable = "".join(i)
+    iterJoin.append(colLable)
+    colValues_zeros = [0]*rowsCount
+    featureTable[colLable] = colValues_zeros
+
+
+  # Filling NucleotidesColumn with their frequency for each sequence
+  for idIndex in range(rowsCount):
+    id = Sequences.iloc[idIndex,0]
+    seq = Sequences.iloc[idIndex,1]
+    s = Sequence(seq)
+    freqs = s.kmer_frequencies(NucleotideNum, relative=True, overlap=True)
+    for nucleotide in freqs:
+      if nucleotide in iterJoin :
+        featureTable.loc[id , nucleotide] = freqs[nucleotide]
+
+
+  ###### Creating Reverse Complement Features ######
+
+  # Extracting Tetranucleotides' name
+  featuresName = [ x for x in featureTable.keys()[7:]]
+
+  # Calculating new features based on tetraNucleotides & their reverse complement
+  while len(featuresName)>0 : 
+    tetraNucleotideName = featuresName[0]
+
+    seq = DNA(tetraNucleotideName)
+    tetraNucleotide_ReverseComp = str(seq.reverse_complement())
+
+    if(tetraNucleotide_ReverseComp == tetraNucleotideName):
+        featureTable[f'{tetraNucleotideName}/{tetraNucleotide_ReverseComp}'] = featureTable[tetraNucleotideName]
+    else:
+        featureTable[f'{tetraNucleotideName}/{tetraNucleotide_ReverseComp}'] = featureTable[tetraNucleotideName] + featureTable[tetraNucleotide_ReverseComp]
+        featureTable.drop(tetraNucleotide_ReverseComp, axis=1, inplace=True)
+        featuresName.remove(tetraNucleotide_ReverseComp)
+
+    featureTable.drop(tetraNucleotideName, axis=1, inplace=True)
+    featuresName.remove(tetraNucleotideName)   
+
+  featureTable.to_csv("featureTableNew.tsv", sep="\t")
+  '''
+}
+
+featureTableNew
+  .collectFile(name: file("${params.org}_featureTableNew.tsv"))
+
+  
 
 /*************************************************************************************
 * END of Workflow
