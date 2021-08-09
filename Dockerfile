@@ -52,10 +52,6 @@ RUN curl -fsL http://transterm.cbcb.umd.edu/transterm_hp_v2.09.zip -o transterm_
     cd transterm_hp_v2.09 
     # make clean transterm
 
-# bprom requires 32-bit libraries
-RUN dpkg --add-architecture i386 && apt-get update \
-    && apt-get install -y libc6:i386
-
 # install Python3 and its libraries
 RUN apt-get update --fix-missing -qq && apt-get -y install -y -q \
     software-properties-common && \
@@ -66,6 +62,4 @@ RUN apt-get update --fix-missing -qq && apt-get -y install -y -q \
     apt-get install -y python3-skbio
 
 ENV PATH $PATH:/transterm_hp_v2.09:/lin/
-
 ENV TERM_DATA="/transterm_hp_v2.09/expterm.dat"
-ENV TSS_DATA="/lin/data"
