@@ -7,7 +7,8 @@ The pipeline obtains for each sRNA provided:
 * the free energy of its secondary structure using centroidFold,
 * the distance to the closest promoter predicted by Promotech,
 * the distance to the closest terminator predicted by transterm,
-* the distance to the closest ORFs listed in the genome annotation.
+* the distance to the closest ORFs listed in the genome annotation, and
+* a vector with the reverse tetranucleotide (tetranucleotide + its reverse complement) frequencies.
 
 ## 1. Requisites
 
@@ -23,7 +24,7 @@ Nextflow can be installed on any POSIX system (UNIX-like system such as Linux, O
 
 ## 1.2 Other software
 
-sRNACharP  requires several pieces of software. There are two ways to install all of the software packages required: natively, or by using [Docker](https://www.docker.com/) (recommended).
+sRNACharP  requires several pieces of software. There are two ways to get sRNACharP to run: 1) install all of the software packages required natively, or 2) use sRNACharP [Docker](https://www.docker.com/) container (recommended).
 
 ## *Docker
 
@@ -91,7 +92,7 @@ NC_008060.1	2044980	2045161	s2044980	182	+
 NC_008062.1	409323	409390	s409323	68	+
 ```
 
-NOTE: Make sure that the sequence identifier is the same in both BED files and in the genome FASTA file. The sequence identifier should not contain whitespace.
+NOTE: Make sure that the sequence identifier is the same in both BED files and in the genome FASTA file (in the example above the sequence identifier is NC_008060.1). The sequence identifier should not contain any whitespace.
 
 ## 3. Running the pipeline
 
