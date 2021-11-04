@@ -92,8 +92,6 @@ NC_008060.1	2044980	2045161	s2044980	182	+
 NC_008062.1	409323	409390	s409323	68	+
 ```
 
-NOTE: Make sure that the sequence identifier is the same in both BED files and in the genome FASTA file (in the example above the sequence identifier is NC_008060.1). The sequence identifier should not contain any whitespace.
-
 The promoter file provides the location of promoter sequences in the genome. You can use our programs [Promotech](https://github.com/BioinformaticsLabAtMUN/PromoTech) or [Promotech-CNN](https://github.com/BioinformaticsLabAtMUN/Promotech-CNN) to obtain promoter predictions. However, prior knowledge or othe software can be used to obtain promoter locations. The promoter file contains six columns: Sequence, start of promoter, end of promoter, probability of being a promoter, strand and promoter sequence.  For instance, 
 
 ```
@@ -102,6 +100,8 @@ NC_008060.1      3651194 3651233 0.65932 +       CCGCTGGAATTCAACATCGCCTGACCCTAGA
 NC_008060.1      3652212 3652251 0.68253 +       CCCTGTTCCCCGCCCCCGTGCCGGAGATAACCTTTCCGCA
 NC_008060.1      3656315 3656354 0.67378 +       CCGCCGCCGCATCGCGCAGGTTGGTGCCATAATCGTCCCG
 ```
+
+**NOTE**: Make sure that the sequence identifier is the same in all BED files and in the genome FASTA file (in the example above the sequence identifier is NC_008060.1). The sequence identifier should not contain any whitespace.
 
 ## 3. Running the pipeline
 
