@@ -94,6 +94,15 @@ NC_008062.1	409323	409390	s409323	68	+
 
 NOTE: Make sure that the sequence identifier is the same in both BED files and in the genome FASTA file (in the example above the sequence identifier is NC_008060.1). The sequence identifier should not contain any whitespace.
 
+The promoter file provides the location of promoter sequences in the genome. You can use our programs [Promotech](https://github.com/BioinformaticsLabAtMUN/PromoTech) or [Promotech-CNN](https://github.com/BioinformaticsLabAtMUN/Promotech-CNN) to obtain promoter predictions. However, prior knowledge or othe software can be used to obtain promoter locations. The promoter file contains six columns: Sequence, start of promoter, end of promoter, probability of being a promoter, strand and promoter sequence.  For instance, 
+
+```
+NC_008060.1      3647120 3647159 0.63685 -       CGTTTTCCGTCCGCAGGCTCCGGTTGGCACGATGGATGCG
+NC_008060.1      3651194 3651233 0.65932 +       CCGCTGGAATTCAACATCGCCTGACCCTAGATTCAAGGCG
+NC_008060.1      3652212 3652251 0.68253 +       CCCTGTTCCCCGCCCCCGTGCCGGAGATAACCTTTCCGCA
+NC_008060.1      3656315 3656354 0.67378 +       CCGCCGCCGCATCGCGCAGGTTGGTGCCATAATCGTCCCG
+```
+
 ## 3. Running the pipeline
 
 sRNACharP is configured to run using the [Docker](https://www.docker.com/) container engine by default (see [Nextflow config file](nextflow.config)). If you are using Docker, download the [Nextflow config file](nextflow.config) and save it on the same directory as the sRNACharP.nf file. If you have installed the required software natively, you will need to modify the [Nextflow config file](nextflow.config).
